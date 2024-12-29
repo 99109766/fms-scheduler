@@ -1,2 +1,2 @@
 run:
-	go run ./cmd/main.go --config confif.yaml
+	go run ./cmd/main.go --config config.yaml
