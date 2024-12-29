@@ -1,8 +1,8 @@
 package main
 
 import (
+	"flag"
 	"fmt"
-	"github.com/spf13/pflag"
 	"log"
 
 	"github.com/99109766/fms-scheduler/config"
@@ -13,13 +13,13 @@ import (
 
 func main() {
 	// Parse flags
-	var configPath string
-	pflag.StringVar(&configPath, "config", "", "Path to the configuration file (YAML format)")
-	pflag.Parse()
+	configPathPtr := flag.String("config", "", "Path to the configuration file (YAML format)")
+	flag.Parse()
 
-	if configPath == "" {
-		log.Fatal("Config file path must be provided using --config flag")
+	if configPathPtr == nil {
+		log.Fatal("Config file path must be provided using --config or -c flag")
 	}
+	configPath := *configPathPtr
 
 	// Load Configuration
 	cfg, err := config.LoadConfig(configPath)
@@ -27,22 +27,18 @@ func main() {
 		log.Fatalf("Error loading configuration: %v", err)
 	}
 
-	// Generate tasks using UUnifast
+	// Generate tasks using UUnifast without any resource assignments
 	taskSet, err := tasks.GenerateTasksUUnifast(cfg.NumTasks, cfg.TotalUtil)
 	if err != nil {
 		log.Fatalf("Error generating tasks: %v", err)
 	}
-
-	// Assign random criticalities (some LC, some HC)
-	// and for HC tasks, assign two different WCET values:
-	tasks.AssignMixedCriticality(taskSet)
 
 	fmt.Println("=== Generated Tasks ===")
 	for _, t := range taskSet {
 		fmt.Println(t)
 	}
 
-	// Generate Resources & Map them to tasks
+	// Generate resources without any assignments
 	resourceList := resources.GenerateResources(cfg.NumResources)
 
 	// Assign resources to tasks (e.g., nested resource usage)
