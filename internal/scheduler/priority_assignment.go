@@ -1,8 +1,9 @@
 package scheduler
 
 import (
-	"github.com/99109766/fms-scheduler/internal/tasks"
 	"sort"
+
+	"github.com/99109766/fms-scheduler/internal/tasks"
 )
 
 // DeterminePriorityLevels is a placeholder that, for example,
@@ -16,8 +17,7 @@ func DeterminePriorityLevels(taskSet []*tasks.Task) {
 
 	// Assign priority: 1 = highest, 2 = next, ...
 	for rank, t := range taskSet {
-		// rank starts from 0, so priority is rank+1
-		t.UpdatePriority(rank + 1)
+		t.Priority = rank + 1
 	}
 
 	// NOTE: For EDF, you'd sort by absolute deadlines, not by period,
