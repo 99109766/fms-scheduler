@@ -7,7 +7,7 @@ import (
 
 // DeterminePriorityLevels is a placeholder that, for example,
 // might assign priority based on period (rate monotonic) or deadline (EDF).
-// For Phase 1, we can do something simple: sort tasks by ascending period (RM).
+// For Phase 1, we can do something simple: sort tasks by ascending period (RM). TODO: CAN WE?
 func DeterminePriorityLevels(taskSet []*tasks.Task) {
 	// Sort tasks by ascending period
 	sort.Slice(taskSet, func(i, j int) bool {

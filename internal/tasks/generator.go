@@ -79,6 +79,7 @@ func AssignCriticalSections(tasks []*Task, resourceList []resources.Resource) {
 	// (like how long each critical section is). For demonstration, we just do a print or log.
 	// You could also integrate a maximum concurrency parameter, etc.
 	// We'll keep it no-op here or minimal for phase 1.
+	// TODO: complete this function
 }
 
 // uUniFast is the internal function implementing the UUnifast algorithm.

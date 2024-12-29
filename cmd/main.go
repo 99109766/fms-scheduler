@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	// --- 0) Parse flags ---
+	// Parse flags
 	var configPath string
 	pflag.StringVar(&configPath, "config", "", "Path to the configuration file (YAML format)")
 	pflag.Parse()
@@ -21,13 +21,13 @@ func main() {
 		log.Fatal("Config file path must be provided using --config flag")
 	}
 
-	// --- 1) Load Configuration ---
+	// Load Configuration
 	cfg, err := config.LoadConfig(configPath)
 	if err != nil {
 		log.Fatalf("Error loading configuration: %v", err)
 	}
 
-	// --- 2) Generate tasks using UUnifast ---
+	// Generate tasks using UUnifast
 	taskSet, err := tasks.GenerateTasksUUnifast(cfg.NumTasks, cfg.TotalUtil)
 	if err != nil {
 		log.Fatalf("Error generating tasks: %v", err)
@@ -37,13 +37,12 @@ func main() {
 	// and for HC tasks, assign two different WCET values:
 	tasks.AssignMixedCriticality(taskSet)
 
-	// Print out the tasks info
 	fmt.Println("=== Generated Tasks ===")
 	for _, t := range taskSet {
 		fmt.Println(t)
 	}
 
-	// --- 3) Generate Resources & Map them to tasks ---
+	// Generate Resources & Map them to tasks
 	resourceList := resources.GenerateResources(cfg.NumResources)
 
 	// Assign resources to tasks (e.g., nested resource usage)
@@ -54,13 +53,12 @@ func main() {
 		fmt.Printf("Resource %d assigned to tasks: %v\n", r.ID, r.AssignedTasks)
 	}
 
-	// --- 4) Assign critical sections to tasks ---
+	// Assign critical sections to tasks
 	tasks.AssignCriticalSections(taskSet, resourceList)
 
-	// --- 5) Determine priority levels or preemption levels ---
+	// Determine priority levels or preemption levels
 	scheduler.DeterminePriorityLevels(taskSet)
 
-	// Print results
 	fmt.Println("\n=== Final Task Details (with assigned priorities) ===")
 	for _, t := range taskSet {
 		fmt.Println(t)

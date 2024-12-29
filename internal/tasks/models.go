@@ -28,7 +28,7 @@ type Task struct {
 }
 
 // String implements fmt.Stringer for pretty print
-func (t Task) String() string {
+func (t *Task) String() string {
 	if t.Criticality == LC {
 		return fmt.Sprintf(
 			"[Task %d | LC | Period=%.2f | Deadline=%.2f | WCET=%.2f | Util=%.2f | Priority=%d | Res=%v]",
