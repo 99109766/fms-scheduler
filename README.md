@@ -20,6 +20,6 @@ In addition to using the predefined set of tasks labeled as **FMS**, you should 
 
 # Phases of Implementation
 
-1. **Phase 1:** In the first phase, implement the proposed algorithm for generating and mapping resources, allocating critical sections to tasks, and determining priority levels for the generated tasks. The results should be reported as output.
+1. **Phase 1:** Implement the proposed algorithm for generating and mapping resources, allocating critical sections to tasks, and determining priority levels for the generated tasks. The results should be reported as output.
 
-2. **Phase 2:** All requested charts must be reported in the final phase.
+2. **Phase 2:** All requested charts must be reported as output.
