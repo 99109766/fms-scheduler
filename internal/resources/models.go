@@ -2,7 +2,6 @@ package resources
 
 import "fmt"
 
-// Resource model. For demonstration, we store only an ID and which tasks are using it.
 type Resource struct {
 	ID            int
 	AssignedTasks []int
