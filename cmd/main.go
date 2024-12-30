@@ -28,7 +28,7 @@ func main() {
 	}
 
 	// Generate tasks using UUnifast without any resource assignments
-	taskSet, err := tasks.GenerateTasksUUnifast(cfg.NumTasks, cfg.TotalUtil)
+	taskSet, err := tasks.GenerateTasksUUnifast(cfg)
 	if err != nil {
 		log.Fatalf("Error generating tasks: %v", err)
 	}
@@ -42,7 +42,7 @@ func main() {
 	resourceList := resources.GenerateResources(cfg.NumResources)
 
 	// Assign resources to tasks (e.g., nested resource usage)
-	tasks.AssignResourcesToTasks(taskSet, resourceList)
+	tasks.AssignResourcesToTasks(cfg, taskSet, resourceList)
 
 	fmt.Println("\n=== Resource Assignments ===")
 	for _, r := range resourceList {

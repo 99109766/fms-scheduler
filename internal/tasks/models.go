@@ -17,9 +17,9 @@ type Task struct {
 	Period         float64
 	Deadline       float64
 	WCET1          float64
-	WCET2          float64 // only used if HC
-	AssignedResIDs []int   // Resource IDs this task will use
-	Priority       int     // Priority (lower number = higher priority)
+	WCET2          float64
+	AssignedResIDs []int
+	Priority       int
 }
 
 func (t *Task) String() string {

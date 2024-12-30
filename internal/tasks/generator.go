@@ -5,25 +5,18 @@ import (
 	"math"
 	"math/rand"
 
+	"github.com/99109766/fms-scheduler/config"
 	"github.com/99109766/fms-scheduler/internal/resources"
 )
 
-const (
-	MinPeriod     = 50  // Period range for tasks
-	MaxPeriod     = 200 // Period range for tasks
-	WCETRatio     = 0.5 // WCET2 = WCET1 * WCETRatio
-	HighRatio     = 0.4 // Probability of a task being high-criticality
-	ResourceRatio = 0.5 // Probability of a task using a resource
-)
-
 // GenerateTasksUUnifast generates a set of tasks whose sum of utilization = totalUtil.
-// numTasks is the count of tasks, totalUtil is the sum of utilization for all tasks.
-func GenerateTasksUUnifast(numTasks int, totalUtil float64) ([]*Task, error) {
+func GenerateTasksUUnifast(cfg *config.Config) ([]*Task, error) {
+	numTasks, totalUtil := cfg.NumTasks, cfg.TotalUtil
 	if numTasks <= 0 {
-		return nil, errors.New("numTasks must be positive")
+		return nil, errors.New("number of tasks must be greater than 0")
 	}
-	if totalUtil <= 0 || totalUtil > float64(numTasks) {
-		return nil, errors.New("totalUtil is out of valid range")
+	if totalUtil <= 0 || totalUtil > 1 {
+		return nil, errors.New("total utilization must be in the range (0, 1]")
 	}
 
 	// Apply UUnifast algorithm
@@ -32,7 +25,7 @@ func GenerateTasksUUnifast(numTasks int, totalUtil float64) ([]*Task, error) {
 	// Create Task structures
 	tasks := make([]*Task, numTasks)
 	for i := 0; i < numTasks; i++ {
-		period := MinPeriod + rand.Float64()*(MaxPeriod-MinPeriod)
+		period := cfg.MinPeriod + rand.Float64()*(cfg.MaxPeriod-cfg.MinPeriod)
 		wcet := utilizations[i] * period
 
 		tasks[i] = &Task{
@@ -43,23 +36,29 @@ func GenerateTasksUUnifast(numTasks int, totalUtil float64) ([]*Task, error) {
 		}
 	}
 
+	// Assign random criticalities
+	assignRandomCriticalities(cfg, tasks)
+
+	return tasks, nil
+}
+
+// assignRandomCriticalities assigns random criticalities to tasks.
+func assignRandomCriticalities(cfg *config.Config, tasks []*Task) {
 	// Assign random criticalities (some LC, some HC)
 	// and for HC tasks, assign two different WCET values
 	for _, t := range tasks {
-		if rand.Float64() < HighRatio {
+		if rand.Float64() < cfg.HighRatio {
 			t.Criticality = HC
-			t.WCET2 = rand.Float64() * WCETRatio * t.WCET1
+			t.WCET2 = rand.Float64() * cfg.WCETRatio * t.WCET1
 		} else {
 			t.Criticality = LC
 			t.WCET2 = 0
 		}
 	}
-
-	return tasks, nil
 }
 
 // AssignResourcesToTasks randomly assigns resources to tasks.
-func AssignResourcesToTasks(tasks []*Task, resources []*resources.Resource) {
+func AssignResourcesToTasks(cfg *config.Config, tasks []*Task, resources []*resources.Resource) {
 	for _, r := range resources {
 		r.AssignedTasks = nil
 	}
@@ -67,7 +66,7 @@ func AssignResourcesToTasks(tasks []*Task, resources []*resources.Resource) {
 	for _, t := range tasks {
 		t.AssignedResIDs = nil
 		for _, r := range resources {
-			if rand.Float64() < ResourceRatio {
+			if rand.Float64() < cfg.ResourceRatio {
 				t.AssignedResIDs = append(t.AssignedResIDs, r.ID)
 				r.AssignedTasks = append(r.AssignedTasks, t.ID)
 			}
@@ -80,8 +79,6 @@ func AssignCriticalSections(tasks []*Task, resourceList []*resources.Resource) {
 	// Here, you could store additional info about critical sections in the tasks
 	// (like how long each critical section is). For demonstration, we just do a print or log.
 	// You could also integrate a maximum concurrency parameter, etc.
-	// We'll keep it no-op here or minimal for phase 1.
-	// TODO: complete this functio
 }
 
 // uUniFast is the internal function implementing the UUnifast algorithm.
