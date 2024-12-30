@@ -15,6 +15,7 @@ type Config struct {
 	WCETRatio     float64 `yaml:"wcet_ratio"`     // Ratio of WCET2 to WCET1 for high-criticality tasks
 	HighRatio     float64 `yaml:"high_ratio"`     // Probability of a task being high-criticality
 	ResourceRatio float64 `yaml:"resource_ratio"` // Probability of a task using a resource
+	CSFactor      float64 `yaml:"cs_factor"`      // Critical section factor
 }
 
 // LoadConfig reads the YAML configuration file from the given path and returns a pointer to a Config struct.

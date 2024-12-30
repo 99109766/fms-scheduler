@@ -50,7 +50,15 @@ func main() {
 	}
 
 	// Assign critical sections to tasks
-	tasks.AssignCriticalSections(taskSet, resourceList)
+	tasks.AssignCriticalSections(cfg, taskSet, resourceList)
+
+	fmt.Println("\n=== Tasks and Assigned Critical Sections ===")
+	for _, t := range taskSet {
+		fmt.Printf("Task %d (Criticality: %v) Critical Sections:\n", t.ID, t.Criticality)
+		for _, cs := range t.CriticalSections {
+			fmt.Printf("  - Resource %d: %.2f\n", cs.ResourceID, cs.Duration)
+		}
+	}
 
 	// Determine priority levels or preemption levels
 	scheduler.DeterminePriorityLevels(taskSet)

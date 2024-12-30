@@ -75,10 +75,22 @@ func AssignResourcesToTasks(cfg *config.Config, tasks []*Task, resources []*reso
 }
 
 // AssignCriticalSections simulates that each assigned resource has a critical section in the task.
-func AssignCriticalSections(tasks []*Task, resourceList []*resources.Resource) {
-	// Here, you could store additional info about critical sections in the tasks
-	// (like how long each critical section is). For demonstration, we just do a print or log.
-	// You could also integrate a maximum concurrency parameter, etc.
+func AssignCriticalSections(cfg *config.Config, tasks []*Task, resources []*resources.Resource) {
+	for _, t := range tasks {
+		t.CriticalSections = nil
+		if t.AssignedResIDs == nil {
+			continue
+		}
+
+		totalDuration := t.WCET1 * rand.Float64() * cfg.CSFactor
+		durations := uUniFast(len(t.AssignedResIDs), totalDuration)
+		for i, resID := range t.AssignedResIDs {
+			t.CriticalSections = append(t.CriticalSections, CriticalSection{
+				ResourceID: resID,
+				Duration:   durations[i],
+			})
+		}
+	}
 }
 
 // uUniFast is the internal function implementing the UUnifast algorithm.

@@ -6,3 +6,4 @@ max_period: 200
 wcet_ratio: 0.5
 high_ratio: 0.4
 resource_ratio: 0.5
+cs_factor: 0.5
