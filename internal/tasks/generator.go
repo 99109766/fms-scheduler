@@ -1,7 +1,6 @@
 package tasks
 
 import (
-	"errors"
 	"math"
 	"math/rand"
 
@@ -10,14 +9,8 @@ import (
 )
 
 // GenerateTasksUUnifast generates a set of tasks whose sum of utilization = totalUtil.
-func GenerateTasksUUnifast(cfg *config.Config) ([]*Task, error) {
-	numTasks, totalUtil := cfg.NumTasks, cfg.TotalUtil
-	if numTasks <= 0 {
-		return nil, errors.New("number of tasks must be greater than 0")
-	}
-	if totalUtil <= 0 || totalUtil > 1 {
-		return nil, errors.New("total utilization must be in the range (0, 1]")
-	}
+func GenerateTasksUUnifast(cfg *config.Config) []*Task {
+	numTasks, totalUtil := cfg.NumTasks, cfg.TotalUtility
 
 	// Apply UUnifast algorithm
 	utilizations := uUniFast(numTasks, totalUtil)
@@ -25,7 +18,7 @@ func GenerateTasksUUnifast(cfg *config.Config) ([]*Task, error) {
 	// Create Task structures
 	tasks := make([]*Task, numTasks)
 	for i := 0; i < numTasks; i++ {
-		period := cfg.MinPeriod + rand.Float64()*(cfg.MaxPeriod-cfg.MinPeriod)
+		period := cfg.PeriodRange[0] + rand.Float64()*(cfg.PeriodRange[1]-cfg.PeriodRange[0])
 		wcet := utilizations[i] * period
 
 		tasks[i] = &Task{
@@ -39,7 +32,7 @@ func GenerateTasksUUnifast(cfg *config.Config) ([]*Task, error) {
 	// Assign random criticalities
 	assignRandomCriticalities(cfg, tasks)
 
-	return tasks, nil
+	return tasks
 }
 
 // assignRandomCriticalities assigns random criticalities to tasks.
@@ -49,7 +42,7 @@ func assignRandomCriticalities(cfg *config.Config, tasks []*Task) {
 	for _, t := range tasks {
 		if rand.Float64() < cfg.HighRatio {
 			t.Criticality = HC
-			t.WCET2 = rand.Float64() * cfg.WCETRatio * t.WCET1
+			t.WCET2 = (cfg.WCETRatio[0] + rand.Float64()*(cfg.WCETRatio[1]-cfg.WCETRatio[0])) * t.WCET1
 		} else {
 			t.Criticality = LC
 			t.WCET2 = 0
@@ -66,7 +59,7 @@ func AssignResourcesToTasks(cfg *config.Config, tasks []*Task, resources []*reso
 	for _, t := range tasks {
 		t.AssignedResIDs = nil
 		for _, r := range resources {
-			if rand.Float64() < cfg.ResourceRatio {
+			if rand.Float64() < cfg.ResourceUsage {
 				t.AssignedResIDs = append(t.AssignedResIDs, r.ID)
 				r.AssignedTasks = append(r.AssignedTasks, t.ID)
 			}

@@ -28,10 +28,7 @@ func main() {
 	}
 
 	// Generate tasks using UUnifast without any resource assignments
-	taskSet, err := tasks.GenerateTasksUUnifast(cfg)
-	if err != nil {
-		log.Fatalf("Error generating tasks: %v", err)
-	}
+	taskSet := tasks.GenerateTasksUUnifast(cfg)
 
 	fmt.Println("=== Generated Tasks ===")
 	for _, t := range taskSet {
