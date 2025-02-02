@@ -5,7 +5,7 @@ func GenerateResources(numResources int) []*Resource {
 	resources := make([]*Resource, numResources)
 	for i := 0; i < numResources; i++ {
 		resources[i] = &Resource{
-			ID:            i,
+			ID:            i + 1,
 			AssignedTasks: make([]int, 0),
 		}
 	}

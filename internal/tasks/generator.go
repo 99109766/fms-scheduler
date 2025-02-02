@@ -5,7 +5,6 @@ import (
 	"math/rand"
 
 	"github.com/99109766/fms-scheduler/config"
-	"github.com/99109766/fms-scheduler/internal/resources"
 )
 
 // GenerateTasksUUnifast generates a set of tasks whose sum of utilization = totalUtil.
@@ -22,7 +21,7 @@ func GenerateTasksUUnifast(cfg *config.Config) []*Task {
 		wcet := utilizations[i] * period
 
 		tasks[i] = &Task{
-			ID:       i,
+			ID:       i + 1,
 			WCET1:    wcet,
 			Period:   period,
 			Deadline: period, // By default, deadline = period
@@ -43,61 +42,6 @@ func assignRandomCriticality(cfg *config.Config, tasks []*Task) {
 		} else {
 			t.Criticality = LC
 			t.WCET2 = 0
-		}
-	}
-}
-
-// AssignResourcesToTasks randomly assigns resources to tasks.
-func AssignResourcesToTasks(cfg *config.Config, tasks []*Task, resources []*resources.Resource) {
-	for _, r := range resources {
-		r.AssignedTasks = nil
-	}
-
-	for _, t := range tasks {
-		t.AssignedResIDs = nil
-		for _, r := range resources {
-			if rand.Float64() < cfg.ResourceUsage {
-				t.AssignedResIDs = append(t.AssignedResIDs, r.ID)
-				r.AssignedTasks = append(r.AssignedTasks, t.ID)
-			}
-		}
-	}
-}
-
-// AssignCriticalSections simulates that each assigned resource has a critical section in the task.
-// The critical sections are assigned start times and durations so that they do not partially overlap.
-// They are “stacked” sequentially (which is acceptable since non-overlap implies they are not half‐overlapping).
-func AssignCriticalSections(cfg *config.Config, tasks []*Task, resources []*resources.Resource) {
-	for _, t := range tasks {
-		t.CriticalSections = nil
-		if t.AssignedResIDs == nil || len(t.AssignedResIDs) == 0 {
-			continue
-		}
-
-		// Total critical section duration (a fraction of WCET1)
-		totalDuration := t.WCET1 * rand.Float64() * cfg.CSFactor
-
-		// Split totalDuration among the assigned resources using uUniFast
-		durations := uUniFast(len(t.AssignedResIDs), totalDuration)
-
-		// Compute available free time in the task (WCET1 minus total CS duration)
-		freeTime := t.WCET1 - totalDuration
-		if freeTime < 0 {
-			freeTime = 0
-		}
-		// Distribute free time as gaps before, between, and after critical sections.
-		gaps := uUniFast(len(t.AssignedResIDs)+1, freeTime)
-
-		// Place critical sections sequentially.
-		currentTime := gaps[0]
-		for i, resID := range t.AssignedResIDs {
-			cs := CriticalSection{
-				ResourceID: resID,
-				Start:      currentTime,
-				Duration:   durations[i],
-			}
-			t.CriticalSections = append(t.CriticalSections, cs)
-			currentTime += durations[i] + gaps[i+1]
 		}
 	}
 }
