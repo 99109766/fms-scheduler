@@ -29,7 +29,7 @@ type Task struct {
 	WCET1            float64
 	WCET2            float64
 	AssignedResIDs   []int
-	CriticalSections []CriticalSection
+	CriticalSections []*CriticalSection
 	Priority         int
 	PreemptionLevel  int
 }
