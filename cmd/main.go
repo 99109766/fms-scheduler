@@ -6,7 +6,6 @@ import (
 	"log"
 
 	"github.com/99109766/fms-scheduler/config"
-	"github.com/99109766/fms-scheduler/internal/prs"
 	"github.com/99109766/fms-scheduler/internal/resources"
 	"github.com/99109766/fms-scheduler/internal/scheduler"
 	"github.com/99109766/fms-scheduler/internal/tasks"
@@ -56,17 +55,19 @@ func main() {
 	}
 
 	tasks.DeterminePriorityLevels(taskSet)
+	tasks.ComputeResourceCeilings(taskSet, resourceList)
+	tasks.AssignPreemptionLevels(taskSet, resourceList)
 
-	prs.InitPRS(taskSet, resourceList)
-	fmt.Println("\n=== After PRS Initialization ===")
-	for _, t := range taskSet {
-		fmt.Printf("Task %d: Base Priority = %d, Preemption Level = %d\n", t.ID, t.Priority, t.PreemptionLevel)
-	}
 	fmt.Println("\n=== Resources with Ceilings ===")
 	for _, r := range resourceList {
 		fmt.Printf("Resource %d: Ceiling = %d, Assigned Tasks = %v\n", r.ID, r.Ceiling, r.AssignedTasks)
 	}
 
+	fmt.Println("\n=== Tasks with Preemption Levels ===")
+	for _, t := range taskSet {
+		fmt.Printf("Task %d: Base Priority = %d, Preemption Level = %d\n", t.ID, t.Priority, t.PreemptionLevel)
+	}
+
 	fmt.Println("\n=== Running Scheduler Simulation ===")
-	scheduler.RunScheduler(taskSet, cfg.SimTime)
+	scheduler.RunScheduler(taskSet, cfg.SimulateTime)
 }
