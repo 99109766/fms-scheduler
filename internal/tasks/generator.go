@@ -29,16 +29,13 @@ func GenerateTasksUUnifast(cfg *config.Config) []*Task {
 		}
 	}
 
-	// Assign random criticalities
-	assignRandomCriticalities(cfg, tasks)
+	assignRandomCriticality(cfg, tasks)
 
 	return tasks
 }
 
-// assignRandomCriticalities assigns random criticalities to tasks.
-func assignRandomCriticalities(cfg *config.Config, tasks []*Task) {
-	// Assign random criticalities (some LC, some HC)
-	// and for HC tasks, assign two different WCET values
+// assignRandomCriticality assigns random criticality to tasks.
+func assignRandomCriticality(cfg *config.Config, tasks []*Task) {
 	for _, t := range tasks {
 		if rand.Float64() < cfg.HighRatio {
 			t.Criticality = HC
@@ -68,34 +65,52 @@ func AssignResourcesToTasks(cfg *config.Config, tasks []*Task, resources []*reso
 }
 
 // AssignCriticalSections simulates that each assigned resource has a critical section in the task.
+// The critical sections are assigned start times and durations so that they do not partially overlap.
+// They are “stacked” sequentially (which is acceptable since non-overlap implies they are not half‐overlapping).
 func AssignCriticalSections(cfg *config.Config, tasks []*Task, resources []*resources.Resource) {
 	for _, t := range tasks {
 		t.CriticalSections = nil
-		if t.AssignedResIDs == nil {
+		if t.AssignedResIDs == nil || len(t.AssignedResIDs) == 0 {
 			continue
 		}
 
+		// Total critical section duration (a fraction of WCET1)
 		totalDuration := t.WCET1 * rand.Float64() * cfg.CSFactor
+
+		// Split totalDuration among the assigned resources using uUniFast
 		durations := uUniFast(len(t.AssignedResIDs), totalDuration)
+
+		// Compute available free time in the task (WCET1 minus total CS duration)
+		freeTime := t.WCET1 - totalDuration
+		if freeTime < 0 {
+			freeTime = 0
+		}
+		// Distribute free time as gaps before, between, and after critical sections.
+		gaps := uUniFast(len(t.AssignedResIDs)+1, freeTime)
+
+		// Place critical sections sequentially.
+		currentTime := gaps[0]
 		for i, resID := range t.AssignedResIDs {
-			t.CriticalSections = append(t.CriticalSections, CriticalSection{
+			cs := CriticalSection{
 				ResourceID: resID,
+				Start:      currentTime,
 				Duration:   durations[i],
-			})
+			}
+			t.CriticalSections = append(t.CriticalSections, cs)
+			currentTime += durations[i] + gaps[i+1]
 		}
 	}
 }
 
-// uUniFast is the internal function implementing the UUnifast algorithm.
+// uUniFast is the internal function implementing the UUniFast algorithm.
 func uUniFast(n int, U float64) []float64 {
-	var sumU float64 = U
-	var utilis = make([]float64, n)
-
+	sumU := U
+	utils := make([]float64, n)
 	for i := 1; i < n; i++ {
-		next := sumU * math.Pow(rand.Float64(), 1.0/float64(n-i))
-		utilis[i-1] = sumU - next
+		next := sumU * (math.Pow(rand.Float64(), 1.0/float64(n-i)))
+		utils[i-1] = sumU - next
 		sumU = next
 	}
-	utilis[n-1] = sumU
-	return utilis
+	utils[n-1] = sumU
+	return utils
 }

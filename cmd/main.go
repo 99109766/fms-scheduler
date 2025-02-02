@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/99109766/fms-scheduler/config"
+	"github.com/99109766/fms-scheduler/internal/prs"
 	"github.com/99109766/fms-scheduler/internal/resources"
 	"github.com/99109766/fms-scheduler/internal/scheduler"
 	"github.com/99109766/fms-scheduler/internal/tasks"
@@ -16,7 +17,7 @@ func main() {
 	configPathPtr := flag.String("config", "", "Path to the configuration file (YAML format)")
 	flag.Parse()
 
-	if configPathPtr == nil {
+	if configPathPtr == nil || *configPathPtr == "" {
 		log.Fatal("Config file path must be provided using --config or -c flag")
 	}
 	configPath := *configPathPtr
@@ -35,10 +36,7 @@ func main() {
 		fmt.Println(t)
 	}
 
-	// Generate resources without any assignments
 	resourceList := resources.GenerateResources(cfg.NumResources)
-
-	// Assign resources to tasks (e.g., nested resource usage)
 	tasks.AssignResourcesToTasks(cfg, taskSet, resourceList)
 
 	fmt.Println("\n=== Resource Assignments ===")
@@ -46,22 +44,29 @@ func main() {
 		fmt.Printf("Resource %d assigned to tasks: %v\n", r.ID, r.AssignedTasks)
 	}
 
-	// Assign critical sections to tasks
 	tasks.AssignCriticalSections(cfg, taskSet, resourceList)
 
 	fmt.Println("\n=== Tasks and Assigned Critical Sections ===")
 	for _, t := range taskSet {
 		fmt.Printf("Task %d (Criticality: %v) Critical Sections:\n", t.ID, t.Criticality)
 		for _, cs := range t.CriticalSections {
-			fmt.Printf("  - Resource %d: %.2f\n", cs.ResourceID, cs.Duration)
+			fmt.Printf("  - Resource %d: Start=%.2f, Duration=%.2f, End=%.2f\n",
+				cs.ResourceID, cs.Start, cs.Duration, cs.Start+cs.Duration)
 		}
 	}
 
-	// Determine priority levels or preemption levels
-	scheduler.DeterminePriorityLevels(taskSet)
+	tasks.DeterminePriorityLevels(taskSet)
 
-	fmt.Println("\n=== Final Task Details (with assigned priorities) ===")
+	prs.InitPRS(taskSet, resourceList)
+	fmt.Println("\n=== After PRS Initialization ===")
 	for _, t := range taskSet {
-		fmt.Println(t)
+		fmt.Printf("Task %d: Base Priority = %d, Preemption Level = %d\n", t.ID, t.Priority, t.PreemptionLevel)
 	}
+	fmt.Println("\n=== Resources with Ceilings ===")
+	for _, r := range resourceList {
+		fmt.Printf("Resource %d: Ceiling = %d, Assigned Tasks = %v\n", r.ID, r.Ceiling, r.AssignedTasks)
+	}
+
+	fmt.Println("\n=== Running Scheduler Simulation ===")
+	scheduler.RunScheduler(taskSet, cfg.SimTime)
 }
