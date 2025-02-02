@@ -8,15 +8,15 @@ import (
 )
 
 type Config struct {
-	NumResources  int        `yaml:"num_resources" validate:"gt=0"`
-	NumTasks      int        `yaml:"num_tasks" validate:"gt=0"`
-	TotalUtility  float64    `yaml:"total_utility" validate:"gt=0,lte=1"`
-	PeriodRange   [2]float64 `yaml:"period_range" validate:"min=0,ltcsfield=PeriodRange[1]"`
-	WCETRatio     [2]float64 `yaml:"wcet_ratio" validate:"min=0,ltcsfield=WCETRatio[1]"`
-	HighRatio     float64    `yaml:"high_ratio" validate:"gte=0,lte=1"`
-	ResourceUsage float64    `yaml:"resource_usage" validate:"gte=0,lte=1"`
-	CSFactor      float64    `yaml:"cs_factor" validate:"gt=0,lte=1"`
-	SimTime       float64    `yaml:"sim_time" validate:"gt=0"`
+	NumResources  int        `yaml:"num_resources" validate:"min=0"`
+	NumTasks      int        `yaml:"num_tasks" validate:"min=0"`
+	TotalUtility  float64    `yaml:"total_utility" validate:"min=0,max=1"`
+	PeriodRange   [2]float64 `yaml:"period_range" validate:"min=0,valid_range"`
+	WCETRatio     [2]float64 `yaml:"wcet_ratio" validate:"min=0,valid_range"`
+	HighRatio     float64    `yaml:"high_ratio" validate:"min=0,max=1"`
+	ResourceUsage float64    `yaml:"resource_usage" validate:"min=0,max=1"`
+	CSFactor      float64    `yaml:"cs_factor" validate:"min=0,max=1"`
+	SimulateTime  float64    `yaml:"sim_time" validate:"min=0"`
 }
 
 // LoadConfig reads the YAML configuration file from the given path and returns a pointer to a Config struct.
@@ -32,6 +32,14 @@ func LoadConfig(filePath string) (*Config, error) {
 	}
 
 	validate := validator.New()
+	// valid_range checks that the first element is ≤ the second element.
+	validate.RegisterValidation("valid_range", func(fl validator.FieldLevel) bool {
+		arr, ok := fl.Field().Interface().([2]float64)
+		if !ok {
+			return false
+		}
+		return arr[0] <= arr[1]
+	})
 	if err := validate.Struct(cfg); err != nil {
 		return nil, err
 	}
