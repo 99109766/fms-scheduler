@@ -3,6 +3,7 @@ package tasks
 import (
 	"math"
 	"math/rand"
+	"sort"
 
 	"github.com/99109766/fms-scheduler/config"
 )
@@ -57,4 +58,23 @@ func uUniFast(n int, U float64) []float64 {
 	}
 	utils[n-1] = sumU
 	return utils
+}
+
+// randomArray generates a random array of n elements whose sum is sum.
+// The minimum value of each element is 1.
+func randomArray(n, sum int) []int {
+	sum -= n
+	arr := make([]int, n)
+	for i := 0; i < n-1; i++ {
+		arr[i] = rand.Intn(sum + 1)
+	}
+	arr[n-1] = sum
+	sort.Ints(arr)
+	for i := n - 1; i > 0; i-- {
+		arr[i] -= arr[i-1]
+	}
+	for i := 0; i < n; i++ {
+		arr[i]++
+	}
+	return arr
 }

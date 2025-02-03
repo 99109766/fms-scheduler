@@ -12,16 +12,19 @@ type Job struct {
 }
 
 // getActiveCriticalSection returns the active critical section for the job,
-// if any. (Since our assignment places CS intervals sequentially, only one
-// will be active at any given time.)
+// if any. (The one with the shortest duration in case of multiple overlapping CSs.)
 func (job *Job) getActiveCriticalSection() *tasks.CriticalSection {
+	var bestCS *tasks.CriticalSection
 	for _, cs := range job.Task.CriticalSections {
 		// Check if job execution is within the CS interval.
 		if job.ExecTime >= cs.Start && job.ExecTime < cs.Start+cs.Duration {
-			return cs
+			// If the current CS is shorter than the best one, update the best.
+			if bestCS == nil || cs.Duration < bestCS.Duration {
+				bestCS = cs
+			}
 		}
 	}
-	return nil
+	return bestCS
 }
 
 // effectivePriority returns a numeric “priority” for the job.

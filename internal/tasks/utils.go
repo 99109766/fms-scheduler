@@ -16,19 +16,18 @@ func AssignResourcesToTasks(cfg *config.Config, tasks []*Task, resources []*reso
 	}
 
 	for _, t := range tasks {
-		t.AssignedResIDs = nil
-		for _, r := range resources {
-			if rand.Float64() < cfg.ResourceUsage {
-				t.AssignedResIDs = append(t.AssignedResIDs, r.ID)
-				r.AssignedTasks = append(r.AssignedTasks, t.ID)
-			}
+		resourceIndexes := rand.Perm(len(resources))
+		numResources := cfg.ResourceUsage[0] + rand.Intn(cfg.ResourceUsage[1]-cfg.ResourceUsage[0]+1)
+		for i := 0; i < numResources; i++ {
+			r := resources[resourceIndexes[i]]
+			t.AssignedResIDs = append(t.AssignedResIDs, r.ID)
+			r.AssignedTasks = append(r.AssignedTasks, t.ID)
 		}
 	}
 }
 
 // AssignCriticalSections simulates that each assigned resource has a critical section in the task.
 // The critical sections are assigned start times and durations so that they do not partially overlap.
-// They are “stacked” sequentially (which is acceptable since non-overlap implies they are not half‐overlapping).
 func AssignCriticalSections(cfg *config.Config, tasks []*Task, resources []*resources.Resource) {
 	for _, t := range tasks {
 		t.CriticalSections = nil
@@ -39,26 +38,53 @@ func AssignCriticalSections(cfg *config.Config, tasks []*Task, resources []*reso
 		// Total critical section duration (a fraction of WCET1)
 		totalDuration := t.WCET1 * rand.Float64() * cfg.CSFactor
 
-		// Split totalDuration among the assigned resources using uUniFast
-		durations := uUniFast(len(t.AssignedResIDs), totalDuration)
+		// Determine the number of critical sections to place in the task.
+		var numSections int
+		for i := 0; i < cfg.CSWeight; i++ {
+			num := 1 + rand.Intn(len(t.AssignedResIDs))
+			if num > numSections {
+				numSections = num
+			}
+		}
+
+		// Split totalDuration among the sections using uUniFast
+		durations := uUniFast(numSections, totalDuration)
 
 		// Compute available free time in the task (WCET1 minus total CS duration)
-		freeTime := t.WCET1 - totalDuration
-		if freeTime < 0 {
-			freeTime = 0
-		}
+		freeTime := math.Max(t.WCET1-totalDuration, 0)
+
 		// Distribute free time as gaps before, between, and after critical sections.
-		gaps := uUniFast(len(t.AssignedResIDs)+1, freeTime)
+		gaps := uUniFast(numSections+1, freeTime)
+
+		// Randomly shuffle the number of resources to assign to each critical section.
+		numResources := randomArray(numSections, len(t.AssignedResIDs))
 
 		// Place critical sections sequentially.
-		currentTime := gaps[0]
-		for i, resID := range t.AssignedResIDs {
-			t.CriticalSections = append(t.CriticalSections, &CriticalSection{
-				ResourceID: resID,
-				Start:      currentTime,
-				Duration:   durations[i],
-			})
-			currentTime += durations[i] + gaps[i+1]
+		currentTime, currentTaskIndex := gaps[0], 0
+		for i, resources := range numResources {
+			// Split the duration of the critical section among the assigned resources.
+			resourceDurations := uUniFast(resources, durations[i])
+
+			// Place the critical section.
+			leftDuration := durations[i]
+			for j := 0; j < resources; j++ {
+				t.CriticalSections = append(t.CriticalSections, &CriticalSection{
+					ResourceID: t.AssignedResIDs[currentTaskIndex],
+					Start:      currentTime,
+					Duration:   leftDuration,
+				})
+
+				if j < resources-1 {
+					currentTime += resourceDurations[j] * rand.Float64()
+				} else {
+					currentTime += resourceDurations[j]
+				}
+				leftDuration -= resourceDurations[j]
+				currentTaskIndex++
+			}
+
+			// Add gap after the critical section.
+			currentTime += gaps[i+1]
 		}
 	}
 }
