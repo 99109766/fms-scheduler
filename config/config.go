@@ -13,11 +13,13 @@ type Config struct {
 	NumTasks      int        `yaml:"num_tasks" validate:"min=0"`
 	TotalUtility  float64    `yaml:"total_utility" validate:"min=0,max=1"`
 	PeriodRange   [2]float64 `yaml:"period_range" validate:"min=0,valid_range"`
+	DeadlineRatio [2]float64 `yaml:"deadline_ratio" validate:"min=0,valid_range"`
 	WCETRatio     [2]float64 `yaml:"wcet_ratio" validate:"min=0,valid_range"`
 	HighRatio     float64    `yaml:"high_ratio" validate:"min=0,max=1"`
 	ResourceUsage [2]int     `yaml:"resource_usage" validate:"min=0,ltefield=NumResources,valid_range"`
 	CSFactor      float64    `yaml:"cs_factor" validate:"min=0,max=1"`
 	CSWeight      int        `yaml:"cs_weight" validate:"min=1"`
+	CSRange       [2]int     `yaml:"cs_range" validate:"min=0,valid_range"`
 	SimulateTime  float64    `yaml:"simulation_time" validate:"min=0"`
 }
 

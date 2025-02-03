@@ -25,7 +25,7 @@ func GenerateTasksUUnifast(cfg *config.Config) []*Task {
 			ID:       i + 1,
 			WCET1:    wcet,
 			Period:   period,
-			Deadline: period, // By default, deadline = period
+			Deadline: period * (cfg.DeadlineRatio[0] + rand.Float64()*(cfg.DeadlineRatio[1]-cfg.DeadlineRatio[0])),
 		}
 	}
 

@@ -49,16 +49,29 @@ def plot_periodic_schedule(schedule_file, tasks_file):
     fig.suptitle("Periodic Task Scheduling Charts")
     plt.show()
 
-def plot_qoc_schedule(schedule_file):
-    # Load schedule data
-    with open(schedule_file, "r") as file:
+def plot_qoc_schedule(schedule_file, tasks_file):
+    # Load JSON data
+    with open(schedule_file, 'r') as file:
         schedule = json.load(file)
+    
+    with open(tasks_file, 'r') as file:
+        tasks = json.load(file)
+
+    task_ids = [task['id'] for task in tasks]
 
     # Compute response times
     response_times = []
-    for task in schedule:
-        response_time = task["end_time"] - task["start_time"]
-        response_times.append(response_time)
+    max_t = max([task['end_time'] for task in schedule])
+    for task in tasks:
+        t = 0
+        schedules = [s for s in schedule if s['task_id'] == task['id']]
+        while t < max_t:
+            try:
+                end_time = max([s['end_time'] for s in schedules if s['start_time'] >= t and s['end_time'] <= t + task['deadline']])
+                response_times.append(round(end_time - t))
+            except:
+                pass
+            t += task['period']
 
     # Plot response time distribution
     plt.figure(figsize=(10, 5))
@@ -69,5 +82,5 @@ def plot_qoc_schedule(schedule_file):
     plt.grid(axis="y", linestyle="--", alpha=0.7)
     plt.show()
 
-plot_qoc_schedule("schedule.json")
+plot_qoc_schedule("schedule.json", "tasks.json")
 plot_periodic_schedule("schedule.json", "tasks.json")

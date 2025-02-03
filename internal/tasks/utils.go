@@ -39,13 +39,7 @@ func AssignCriticalSections(cfg *config.Config, tasks []*Task, resources []*reso
 		totalDuration := t.WCET1 * rand.Float64() * cfg.CSFactor
 
 		// Determine the number of critical sections to place in the task.
-		var numSections int
-		for i := 0; i < cfg.CSWeight; i++ {
-			num := 1 + rand.Intn(len(t.AssignedResIDs))
-			if num > numSections {
-				numSections = num
-			}
-		}
+		numSections := cfg.CSRange[0] + rand.Intn(cfg.CSRange[1]-cfg.CSRange[0]+1)
 
 		// Split totalDuration among the sections using uUniFast
 		durations := uUniFast(numSections, totalDuration)
@@ -57,24 +51,32 @@ func AssignCriticalSections(cfg *config.Config, tasks []*Task, resources []*reso
 		gaps := uUniFast(numSections+1, freeTime)
 
 		// Randomly shuffle the number of resources to assign to each critical section.
-		numResources := randomArray(numSections, len(t.AssignedResIDs))
+		var numResources []int
+		if numSections <= len(t.AssignedResIDs) {
+			numResources = randomArray(numSections, len(t.AssignedResIDs))
+		} else {
+			numResources = randomArray(rand.Intn(len(t.AssignedResIDs))+1, len(t.AssignedResIDs))
+			for len(numResources) < numSections {
+				numResources = append(numResources, 1)
+			}
+		}
 
 		// Place critical sections sequentially.
 		currentTime, currentTaskIndex := gaps[0], 0
-		for i, resources := range numResources {
+		for i, numResource := range numResources {
 			// Split the duration of the critical section among the assigned resources.
-			resourceDurations := uUniFast(resources, durations[i])
+			resourceDurations := uUniFast(numResource, durations[i])
 
 			// Place the critical section.
 			leftDuration := durations[i]
-			for j := 0; j < resources; j++ {
+			for j := 0; j < numResource; j++ {
 				t.CriticalSections = append(t.CriticalSections, &CriticalSection{
-					ResourceID: t.AssignedResIDs[currentTaskIndex],
+					ResourceID: t.AssignedResIDs[currentTaskIndex%len(t.AssignedResIDs)],
 					Start:      currentTime,
 					Duration:   leftDuration,
 				})
 
-				if j < resources-1 {
+				if j < numResource-1 {
 					currentTime += resourceDurations[j] * rand.Float64()
 				} else {
 					currentTime += resourceDurations[j]
