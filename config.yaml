@@ -7,4 +7,4 @@ high_ratio: 0.4
 resource_usage: [1, 5]
 cs_factor: 0.5
 cs_weight: 1
-simulation_time: 100
+simulation_time: 1000

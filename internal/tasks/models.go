@@ -12,9 +12,9 @@ const (
 )
 
 type CriticalSection struct {
-	ResourceID int
-	Start      float64
-	Duration   float64
+	ResourceID int     `json:"resource_id"`
+	Start      float64 `json:"start"`
+	Duration   float64 `json:"duration"`
 }
 
 func (cs CriticalSection) End() float64 {
@@ -22,16 +22,16 @@ func (cs CriticalSection) End() float64 {
 }
 
 type Task struct {
-	ID               int
-	Criticality      CriticalityLevel
-	Period           float64
-	Deadline         float64
-	WCET1            float64
-	WCET2            float64
-	AssignedResIDs   []int
-	CriticalSections []*CriticalSection
-	Priority         int
-	PreemptionLevel  int
+	ID               int                `json:"id"`
+	Criticality      CriticalityLevel   `json:"criticality"`
+	Period           float64            `json:"period"`
+	Deadline         float64            `json:"deadline"`
+	WCET1            float64            `json:"wcet1"`
+	WCET2            float64            `json:"wcet2"`
+	AssignedResIDs   []int              `json:"assigned_res_ids"`
+	CriticalSections []*CriticalSection `json:"critical_sections"`
+	Priority         int                `json:"-"`
+	PreemptionLevel  int                `json:"-"`
 }
 
 func (t *Task) Utilization() float64 {

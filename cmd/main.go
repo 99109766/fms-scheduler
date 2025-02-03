@@ -77,24 +77,39 @@ func main() {
 	}
 
 	fmt.Println("\n=== Final Scheduler ===")
-	encoded, err := json.MarshalIndent(schedule, "", "  ")
-	if err != nil {
-		log.Fatalf("Error encoding schedule: %v", err)
-	}
-	fmt.Println(string(encoded))
 
 	file, err := os.Create("schedule.json")
 	if err != nil {
 		log.Fatalf("Error creating schedule file: %v", err)
 	}
 	defer file.Close()
-
+	encoded, err := json.MarshalIndent(schedule, "", "  ")
+	if err != nil {
+		log.Fatalf("Error encoding schedule: %v", err)
+	}
+	fmt.Println(string(encoded))
 	_, err = file.Write(encoded)
 	if err != nil {
 		log.Fatalf("Error writing schedule file: %v", err)
 	}
 
 	fmt.Println("\n=== Schedule written to schedule.json ===")
+
+	file, err = os.Create("tasks.json")
+	if err != nil {
+		log.Fatalf("Error creating tasks file: %v", err)
+	}
+	defer file.Close()
+	encoded, err = json.MarshalIndent(taskSet, "", "  ")
+	if err != nil {
+		log.Fatalf("Error encoding tasks: %v", err)
+	}
+	_, err = file.Write(encoded)
+	if err != nil {
+		log.Fatalf("Error writing tasks file: %v", err)
+	}
+
+	fmt.Println("\n=== Tasks written to tasks.json ===")
 
 	fmt.Println("\n=== Done ===")
 }
