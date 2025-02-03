@@ -8,6 +8,9 @@ def plot_periodic_schedule(schedule_file, tasks_file):
     
     with open(tasks_file, 'r') as file:
         tasks = json.load(file)
+
+    tasks = [task for task in tasks if any([s['task_id'] == task['id'] for s in schedule])]
+    task_ids = [task['id'] for task in tasks]
     
     num_tasks = len(tasks)
     fig, axes = plt.subplots(num_tasks, 1, figsize=(12, 6), sharex=True)
@@ -18,12 +21,14 @@ def plot_periodic_schedule(schedule_file, tasks_file):
         task_id = task['id']
         period = task['period']
         deadline = task['deadline']
+        if task_id not in task_ids:
+            continue
         
         # Assign each task a unique color
         if task_id not in colors:
             colors[task_id] = plt.cm.Paired(len(colors) % 12 / 12)
         
-        ax = axes[int(task_id) - 1] if num_tasks > 1 else axes
+        ax = axes[task_ids.index(task_id)] if num_tasks > 1 else axes
 
         # Draw arrows for period start and deadline
         t = 0

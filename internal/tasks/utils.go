@@ -40,6 +40,9 @@ func AssignCriticalSections(cfg *config.Config, tasks []*Task, resources []*reso
 
 		// Determine the number of critical sections to place in the task.
 		numSections := cfg.CSRange[0] + rand.Intn(cfg.CSRange[1]-cfg.CSRange[0]+1)
+		if numSections == 0 {
+			numSections = 1
+		}
 
 		// Split totalDuration among the sections using uUniFast
 		durations := uUniFast(numSections, totalDuration)
