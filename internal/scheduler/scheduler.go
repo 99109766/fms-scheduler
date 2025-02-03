@@ -40,7 +40,7 @@ func extendRemainingTime(jobs []*Job) {
 
 // RunScheduler simulates an ER-EDF scheduler for a mixed-criticality system.
 // It releases jobs from the task set and simulates execution for simTime seconds.
-func RunScheduler(taskSet []*tasks.Task, simulateTime float64) {
+func RunScheduler(taskSet []*tasks.Task, simulateTime float64) ([]Schedule, error) {
 	// Map each task to its next release time.
 	nextRelease := make(map[int]float64)
 	for _, t := range taskSet {
@@ -50,6 +50,7 @@ func RunScheduler(taskSet []*tasks.Task, simulateTime float64) {
 	var runningJob *Job
 	mode, dt := Normal, 1e-5
 	readyQueue := make([]*Job, 0)
+	scheduler := make([]Schedule, 0)
 	jobCounter, runningJobInCS := 0, false
 
 	for currentTime := 0.0; currentTime < simulateTime; currentTime += dt {
@@ -88,7 +89,7 @@ func RunScheduler(taskSet []*tasks.Task, simulateTime float64) {
 			if currentTime >= job.AbsoluteDeadline {
 				fmt.Printf("Time %.3f: MISSED Deadline for Job %d (Task %d) [Deadline=%.3f, FinishTime=%.3f]\n",
 					currentTime, job.JobID, job.Task.ID, job.AbsoluteDeadline, currentTime)
-				panic("Deadline missed")
+				return nil, fmt.Errorf("deadline missed for job %d (task %d)", job.JobID, job.Task.ID)
 			}
 		}
 
@@ -157,12 +158,21 @@ func RunScheduler(taskSet []*tasks.Task, simulateTime float64) {
 		if runningJob != nil {
 			runningJob.ExecTime += dt
 			runningJob.RemainingTime -= dt
+			if len(scheduler) > 0 && scheduler[len(scheduler)-1].TaskID == runningJob.Task.ID && scheduler[len(scheduler)-1].EndTime == currentTime {
+				scheduler[len(scheduler)-1].EndTime += dt
+			} else {
+				scheduler = append(scheduler, Schedule{
+					TaskID:    runningJob.Task.ID,
+					StartTime: currentTime,
+					EndTime:   currentTime + dt,
+				})
+			}
 
 			// Check if the job misses its deadline.
 			if currentTime > runningJob.AbsoluteDeadline {
 				fmt.Printf("Time %.3f: MISSED Deadline for Job %d (Task %d) [Deadline=%.3f, ExecTime=%.3f]\n",
 					currentTime, runningJob.JobID, runningJob.Task.ID, runningJob.AbsoluteDeadline, runningJob.ExecTime)
-				panic("Deadline missed!")
+				return nil, fmt.Errorf("deadline missed for job %d (task %d)", runningJob.JobID, runningJob.Task.ID)
 			}
 
 			// Check if an HC job overruns its normal (WCET1) execution in Normal mode.
@@ -186,4 +196,6 @@ func RunScheduler(taskSet []*tasks.Task, simulateTime float64) {
 			}
 		}
 	}
+
+	return scheduler, nil
 }

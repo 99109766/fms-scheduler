@@ -2,6 +2,12 @@ package scheduler
 
 import "github.com/99109766/fms-scheduler/internal/tasks"
 
+type Schedule struct {
+	TaskID    int     `json:"task_id"`
+	StartTime float64 `json:"start_time"`
+	EndTime   float64 `json:"end_time"`
+}
+
 type Job struct {
 	Task             *tasks.Task
 	JobID            int
