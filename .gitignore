@@ -23,5 +23,6 @@ go.sum
 .env
 
 # other files
+schedule.json
 **/.DS_Store
 .idea
