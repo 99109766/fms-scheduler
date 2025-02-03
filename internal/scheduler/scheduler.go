@@ -48,7 +48,7 @@ func RunScheduler(taskSet []*tasks.Task, simulateTime float64) {
 	}
 
 	var runningJob *Job
-	mode, dt := Normal, 0.001
+	mode, dt := Normal, 1e-5
 	readyQueue := make([]*Job, 0)
 	jobCounter, runningJobInCS := 0, false
 
@@ -79,6 +79,16 @@ func RunScheduler(taskSet []*tasks.Task, simulateTime float64) {
 
 				// Schedule the next release for the task.
 				nextRelease[t.ID] += t.Period
+			}
+		}
+
+		// Check if any job has missed its deadline.
+		for i := 0; i < len(readyQueue); i++ {
+			job := readyQueue[i]
+			if currentTime >= job.AbsoluteDeadline {
+				fmt.Printf("Time %.3f: MISSED Deadline for Job %d (Task %d) [Deadline=%.3f, FinishTime=%.3f]\n",
+					currentTime, job.JobID, job.Task.ID, job.AbsoluteDeadline, currentTime)
+				panic("Deadline missed")
 			}
 		}
 
@@ -147,6 +157,13 @@ func RunScheduler(taskSet []*tasks.Task, simulateTime float64) {
 		if runningJob != nil {
 			runningJob.ExecTime += dt
 			runningJob.RemainingTime -= dt
+
+			// Check if the job misses its deadline.
+			if currentTime > runningJob.AbsoluteDeadline {
+				fmt.Printf("Time %.3f: MISSED Deadline for Job %d (Task %d) [Deadline=%.3f, ExecTime=%.3f]\n",
+					currentTime, runningJob.JobID, runningJob.Task.ID, runningJob.AbsoluteDeadline, runningJob.ExecTime)
+				panic("Deadline missed!")
+			}
 
 			// Check if an HC job overruns its normal (WCET1) execution in Normal mode.
 			if runningJob.Task.Criticality == tasks.HC && mode == Normal && runningJob.ExecTime > runningJob.Task.WCET1 {
